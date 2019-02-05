@@ -142,7 +142,44 @@ class KnowledgeBase(object):
         """
         ####################################################
         # Student code goes here
+        return self.assemble_explain_string(fact_or_rule, 0)
 
+
+    def assemble_explain_string(self, fact_or_rule, level):
+        INDENT = '  '
+
+        if factq(fact_or_rule):
+            fr = self._get_fact(fact_or_rule)
+        else:
+            fr = self._get_rule(fact_or_rule)
+
+        if fr:
+            if factq(fr):
+                resp = '{}: {}'.format(fr.name, fr.statement)
+            else:
+                resp = '{}: ('.format(fr.name)
+                for s in fr.lhs:
+                    resp = '{}{}, '.format(resp, s)
+                resp = resp.strip(', ')
+                resp = '{}) -> {}'.format(resp, fr.rhs)
+            if fr.asserted:
+                resp = '{} ASSERTED'.format(resp)
+            resp += '\n'
+
+            if fr.supported_by:
+                for supp in fr.supported_by:
+                    for ii in range(2 * level):
+                        resp = '{}{}'.format(resp, INDENT)
+                    resp = '{}{}SUPPORTED BY\n'.format(resp, INDENT)
+                    for f_or_r in supp:
+                        exp = self.assemble_explain_string(f_or_r, level + 1)
+                        for ii in range((2 * level) + 1):
+                            resp = '{}{}'.format(resp, INDENT)
+                        resp = '{}{}{}'.format(resp, INDENT, exp)
+        else:
+            return "{} is not in the KB".format('Fact' if factq(fact_or_rule) else 'Rule')
+
+        return resp
 
 class InferenceEngine(object):
     def fc_infer(self, fact, rule, kb):
